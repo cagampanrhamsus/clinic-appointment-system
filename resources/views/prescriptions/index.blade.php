@@ -2,7 +2,6 @@
 
 <div class="card">
 
-
 <div class="header">
     <h2>Prescriptions</h2>
 
@@ -11,69 +10,98 @@
             + Create Prescription
         </a>
     @endif
+
 </div>
 
 <table class="prescription-table">
     <thead>
         <tr>
+
             <th>
                 {{ auth()->user()->role === 'doctor' ? 'Patient' : 'Doctor' }}
             </th>
+
             <th>Appointment ID</th>
             <th>Illness</th>
             <th>Medicine</th>
             <th>Instructions</th>
-            <th>Download Prescription</th>
+
+            @if(auth()->user()->role === 'patient')
+                <th>Download Prescription</th>
+            @endif
+
         </tr>
     </thead>
 
     <tbody>
-        @forelse($prescriptions as $prescription)
-            <tr>
 
+    @forelse($prescriptions as $prescription)
+
+        <tr>
+
+            <td>
+                @if(auth()->user()->role === 'doctor')
+                    {{ $prescription->appointment->patient->name ?? 'N/A' }}
+                @else
+                    {{ $prescription->appointment->doctor->name ?? 'N/A' }}
+                @endif
+            </td>
+
+            <td>
+                #{{ $prescription->appointment->id ?? 'N/A' }}
+            </td>
+
+            <td>
+                {{ $prescription->illness ?? 'N/A' }}
+            </td>
+
+            <td>
+                {{ $prescription->medicine ?? 'N/A' }}
+            </td>
+
+            <td>
+                {{ $prescription->instructions ?? 'N/A' }}
+            </td>
+
+            @if(auth()->user()->role === 'patient')
                 <td>
-                    @if(auth()->user()->role === 'doctor')
-                        {{ $prescription->appointment->patient->name ?? 'N/A' }}
-                    @else
-                        {{ $prescription->appointment->doctor->name ?? 'N/A' }}
-                    @endif
-                </td>
 
-                <td>
-                    #{{ $prescription->appointment->id ?? 'N/A' }}
-                </td>
+                    <a href="{{ route('prescriptions.pdf', $prescription->id) }}"
+                       class="btn-download btn-pdf">
+                        PDF
+                    </a>
 
-                <td>
-                    {{ $prescription->illness ?? 'N/A' }}
-                </td>
+                    <a href="{{ route('prescriptions.json', $prescription->id) }}"
+                       class="btn-download btn-json">
+                        JSON
+                    </a>
 
-                <td>
-                    {{ $prescription->medicine ?? 'N/A' }}
-                </td>
+                    <a href="{{ route('prescriptions.xml', $prescription->id) }}"
+                       class="btn-download btn-xml">
+                        XML
+                    </a>
 
-                <td>
-                    {{ $prescription->instructions ?? 'N/A' }}
-                </td>
+                    <a href="{{ route('prescriptions.xsd', $prescription->id) }}"
+                       class="btn-download btn-xsd">
+                        XSD
+                    </a>
 
-                <td>
-                    @if(auth()->user()->role === 'patient')
-                        <a href="{{ route('prescriptions.pdf', $prescription->id) }}"
-                           class="btn-download">
-                            Download PDF
-                        </a>
-                    @else
-                        -
-                    @endif
                 </td>
+            @endif
 
-            </tr>
-        @empty
-            <tr>
-                <td colspan="6" style="text-align:center;">
-                    No prescriptions found.
-                </td>
-            </tr>
-        @endforelse
+        </tr>
+
+    @empty
+
+        <tr>
+            <td colspan="{{ auth()->user()->role === 'patient' ? 6 : 5 }}"
+                style="text-align:center;">
+                No prescriptions found.
+            </td>
+        </tr>
+
+    @endforelse
+
     </tbody>
 </table>
 
@@ -113,16 +141,45 @@
 }
 
 .btn-download {
-    background: #16a34a;
     color: white;
     text-decoration: none;
     padding: 8px 12px;
     border-radius: 6px;
     font-weight: bold;
+    margin-right: 5px;
+    display: inline-block;
 }
 
-.btn-download:hover {
+.btn-pdf {
+    background: #16a34a;
+}
+
+.btn-json {
+    background: #f59e0b;
+}
+
+.btn-xml {
+    background: #7c3aed;
+}
+
+.btn-xsd {
+    background: #dc2626;
+}
+
+.btn-pdf:hover {
     background: #15803d;
+}
+
+.btn-json:hover {
+    background: #d97706;
+}
+
+.btn-xml:hover {
+    background: #6d28d9;
+}
+
+.btn-xsd:hover {
+    background: #b91c1c;
 }
 
 .prescription-table {

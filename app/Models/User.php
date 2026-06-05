@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Notifications\DatabaseNotification;
+use Laravel\Sanctum\HasApiTokens;
+
 use App\Models\MedicalHistory;
 use App\Models\Appointment;
-use Illuminate\Notifications\DatabaseNotification;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     protected $fillable = [
         'name',
@@ -33,22 +35,25 @@ class User extends Authenticatable
         ];
     }
 
+    // Medical history (patient)
     public function medicalHistories()
     {
         return $this->hasMany(MedicalHistory::class, 'patient_id');
     }
 
+    // Appointments as patient
     public function appointments()
     {
         return $this->hasMany(Appointment::class, 'patient_id');
     }
 
+    // Appointments as doctor
     public function doctorAppointments()
     {
         return $this->hasMany(Appointment::class, 'doctor_id');
     }
 
-    // ✅ ADD THIS (fixes IDE + clarity)
+    // Notifications
     public function notifications()
     {
         return $this->morphMany(DatabaseNotification::class, 'notifiable')->latest();

@@ -9,9 +9,13 @@ class DoctorController extends Controller
 {
     public function index()
     {
-        $doctors = User::where('role', 'doctor')->get();
+    $doctors = User::where('role', 'doctor')->get();
 
-        return view('doctors.index', compact('doctors'));
+    if (request()->is('api/*')) {
+        return response()->json($doctors);
+    }
+
+    return view('doctors.index', compact('doctors'));
     }
 
     public function create()

@@ -18,6 +18,7 @@
             position: fixed;
             padding: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            overflow-y: auto;
         }
 
         .sidebar h3 {
@@ -46,30 +47,19 @@
             padding: 20px;
         }
 
-        .card {
-            background: white;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        button {
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+            width: 100%;
+            border-radius: 6px;
+            font-weight: bold;
             padding: 10px;
             border: none;
             cursor: pointer;
         }
 
-        .logout-btn{
-            background:#dc2626;
-            color:white;
-            width:100%;
-            border-radius:6px;
-            font-weight:bold;
-        }
-
-        .logout-btn:hover{
-            background:#b91c1c;
+        .logout-btn:hover {
+            background: #b91c1c;
         }
     </style>
 </head>
@@ -85,7 +75,9 @@
         <a href="/appointments">Manage Appointments</a>
         <a href="/patients">Patient Records</a>
         <a href="/prescriptions">Issue Prescriptions</a>
-        
+
+        {{-- 📅 ONLY CALENDAR LINK --}}
+        <a href="{{ route('appointments.calendar') }}">Appointments Calendar</a>
 
     @elseif(auth()->user()->role === 'patient')
 

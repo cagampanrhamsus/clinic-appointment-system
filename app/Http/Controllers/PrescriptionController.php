@@ -16,21 +16,21 @@ class PrescriptionController extends Controller
         $user = Auth::user();
 
         $prescriptions = Prescription::with([
-                'appointment.doctor',
-                'appointment.patient'
-            ])
-            ->when($user->role === 'doctor', function ($q) use ($user) {
-                $q->whereHas('appointment', function ($sub) use ($user) {
-                    $sub->where('doctor_id', $user->id);
-                });
-            })
-            ->when($user->role === 'patient', function ($q) use ($user) {
-                $q->whereHas('appointment', function ($sub) use ($user) {
-                    $sub->where('patient_id', $user->id);
-                });
-            })
-            ->latest()
-            ->get();
+            'appointment.doctor',
+            'appointment.patient'
+        ])
+        ->when($user->role === 'doctor', function ($q) use ($user) {
+            $q->whereHas('appointment', function ($sub) use ($user) {
+                $sub->where('doctor_id', $user->id);
+            });
+        })
+        ->when($user->role === 'patient', function ($q) use ($user) {
+            $q->whereHas('appointment', function ($sub) use ($user) {
+                $sub->where('patient_id', $user->id);
+            });
+        })
+        ->latest()
+        ->get();
 
         return view('prescriptions.index', compact('prescriptions'));
     }
@@ -39,9 +39,7 @@ class PrescriptionController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'doctor') {
-            abort(403);
-        }
+        if ($user->role !== 'doctor') abort(403);
 
         $appointments = Appointment::with('patient')
             ->where('doctor_id', $user->id)
@@ -55,9 +53,7 @@ class PrescriptionController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->role !== 'doctor') {
-            abort(403);
-        }
+        if ($user->role !== 'doctor') abort(403);
 
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
@@ -90,7 +86,6 @@ class PrescriptionController extends Controller
     {
         $user = Auth::user();
 
-        // 🔒 SECURITY: prevent accessing others' prescriptions
         if (
             ($user->role === 'doctor' && $prescription->appointment->doctor_id !== $user->id) ||
             ($user->role === 'patient' && $prescription->appointment->patient_id !== $user->id)
@@ -98,26 +93,77 @@ class PrescriptionController extends Controller
             abort(403);
         }
 
-        $prescription->load([
-            'appointment.doctor',
-            'appointment.patient'
-        ]);
+        $prescription->load(['appointment.doctor', 'appointment.patient']);
 
         $pdf = Pdf::loadView('prescriptions.pdf', compact('prescription'));
 
         return $pdf->download('prescription-' . $prescription->id . '.pdf');
     }
 
-    public function destroy(Prescription $prescription)
+    public function json(Prescription $prescription)
     {
-        $user = Auth::user();
-
-        if ($user->role !== 'doctor') {
-            abort(403);
-        }
-
-        $prescription->delete();
-
-        return back();
+        return response()->json($prescription)
+            ->header(
+                'Content-Disposition',
+                'attachment; filename=prescription-' . $prescription->id . '.json'
+            );
     }
+
+    public function xml(Prescription $prescription)
+    {
+        $xml = new \SimpleXMLElement('<prescription/>');
+
+        $xml->addChild('id', $prescription->id);
+        $xml->addChild('appointment_id', $prescription->appointment_id);
+        $xml->addChild('illness', $prescription->illness);
+        $xml->addChild('medicine', $prescription->medicine);
+        $xml->addChild('instructions', $prescription->instructions);
+
+        return response($xml->asXML(), 200)
+            ->header('Content-Type', 'application/xml')
+            ->header(
+                'Content-Disposition',
+                'attachment; filename=prescription-' . $prescription->id . '.xml'
+            );
+    }
+
+    public function xsd(Prescription $prescription)
+    {
+        $xsd = '<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:element name="prescription">
+[xs:complexType](xs:complexType)
+[xs:sequence](xs:sequence)
+<xs:element name="id" type="xs:integer"/>
+<xs:element name="appointment_id" type="xs:integer"/>
+<xs:element name="illness" type="xs:string"/>
+<xs:element name="medicine" type="xs:string"/>
+<xs:element name="instructions" type="xs:string"/>
+</xs:sequence>
+</xs:complexType>
+</xs:element>
+</xs:schema>';
+
+
+    return response($xsd, 200)
+        ->header('Content-Type', 'application/xml')
+        ->header(
+            'Content-Disposition',
+            'attachment; filename=prescription-schema.xsd'
+        );
+}
+
+public function destroy(Prescription $prescription)
+{
+    $user = Auth::user();
+
+    if ($user->role !== 'doctor') abort(403);
+
+    $prescription->delete();
+
+    return back();
+}
+
+
 }

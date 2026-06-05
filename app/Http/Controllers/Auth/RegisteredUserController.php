@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use Laravel\Sanctum\HasApiTokens;
 
 class RegisteredUserController extends Controller
 {
@@ -39,7 +40,15 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        // ✅ FIXED REDIRECT (NO MORE 404)
-        return redirect()->route('dashboard');
+        // ✅ AUTO GENERATE SANCTUM TOKEN
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        // (Optional) store token in session if needed for UI display
+        session(['api_token' => $token]);
+
+        return redirect()->route('dashboard')->with([
+            'success' => 'Account created successfully!',
+            'token' => $token
+        ]);
     }
 }

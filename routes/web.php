@@ -9,13 +9,26 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PrescriptionController;
 use App\Http\Controllers\MedicalHistoryController;
+use App\Http\Controllers\UserController;
 
 use App\Models\User;
 use App\Models\Appointment;
 
+/*
+|--------------------------------------------------------------------------
+| PUBLIC ROUTES
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/', function () {
     return redirect('/login');
 });
+
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/dashboard', function () {
 
@@ -41,6 +54,12 @@ Route::get('/dashboard', function () {
 
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+/*
+|--------------------------------------------------------------------------
+| AUTH ROUTES
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -57,9 +76,29 @@ Route::middleware(['auth'])->group(function () {
 
         return view('notifications.index', compact('notifications'));
 
-    })->middleware('auth')->name('notifications');
+    })->name('notifications');
 
-    Route::middleware('role:doctor')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | SANCTUM TOKEN
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/token', [UserController::class, 'generateToken']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | 📅 CALENDAR ROUTE
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/appointments/calendar', [AppointmentController::class, 'approvedAppointments'])
+        ->name('appointments.calendar');
+
+    /*
+    |--------------------------------------------------------------------------
+    | DOCTOR ROUTES (FIXED)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role.doctor')->group(function () {
 
         Route::get('/doctors', [DoctorController::class, 'index'])->name('doctors.index');
         Route::get('/doctors/create', [DoctorController::class, 'create'])->name('doctors.create');
@@ -79,11 +118,22 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/medical-history', [MedicalHistoryController::class, 'store'])->name('medical-history.store');
     });
 
+    /*
+    |--------------------------------------------------------------------------
+    | PATIENT ROUTES
+    |--------------------------------------------------------------------------
+    */
     Route::middleware('role:patient')->group(function () {
 
         Route::get('/appointments/create', [AppointmentController::class, 'create'])->name('appointments.create');
         Route::post('/appointments', [AppointmentController::class, 'store'])->name('appointments.store');
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | SHARED ROUTES
+    |--------------------------------------------------------------------------
+    */
 
     Route::get('/medical-history', [MedicalHistoryController::class, 'index'])->name('medical-history.index');
 
@@ -91,8 +141,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
 
-    Route::get('/prescriptions/{prescription}/pdf', [PrescriptionController::class, 'downloadPdf'])
-        ->name('prescriptions.pdf');
+    Route::get('/prescriptions/{prescription}/pdf', [PrescriptionController::class, 'downloadPdf'])->name('prescriptions.pdf');
+
+    Route::get('/prescriptions/{prescription}/json', [PrescriptionController::class, 'json'])->name('prescriptions.json');
+
+    Route::get('/prescriptions/{prescription}/xml', [PrescriptionController::class, 'xml'])->name('prescriptions.xml');
+
+    Route::get('/prescriptions/{prescription}/xsd', [PrescriptionController::class, 'xsd'])->name('prescriptions.xsd');
 });
 
 require __DIR__.'/auth.php';

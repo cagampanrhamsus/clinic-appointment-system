@@ -6,6 +6,16 @@
 
         <h2>Book Appointment</h2>
 
+        @if ($errors->any())
+            <div class="error-box">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form action="{{ route('appointments.store') }}" method="POST">
             @csrf
 
@@ -14,6 +24,8 @@
                 <label>Doctor</label>
 
                 <select name="doctor_id" required>
+                    <option value="">Select Doctor</option>
+
                     @foreach($doctors as $doctor)
                         <option value="{{ $doctor->id }}">
                             {{ $doctor->name }}
@@ -26,17 +38,29 @@
             <div class="form-group">
                 <label>Appointment Date</label>
 
-                <input type="date" name="appointment_date" required>
+                <input
+                    type="date"
+                    name="appointment_date"
+                    min="{{ date('Y-m-d') }}"
+                    required
+                >
             </div>
 
             <!-- Time -->
             <div class="form-group">
                 <label>Appointment Time</label>
 
-                <input type="time" name="appointment_time" required>
+                <select name="appointment_time" required>
+                    <option value="">Select Time Slot</option>
+
+                    <option value="08:00">08:00 AM - 10:00 AM</option>
+                    <option value="10:00">10:00 AM - 12:00 PM</option>
+                    <option value="13:00">01:00 PM - 03:00 PM</option>
+                    <option value="15:00">03:00 PM - 05:00 PM</option>
+                </select>
             </div>
 
-            <!-- Symptoms (FIXED CLEAN VERSION) -->
+            <!-- Symptoms -->
             <div class="form-group">
                 <label>Symptoms / Illness</label>
 
@@ -44,7 +68,8 @@
                     name="symptoms"
                     rows="4"
                     required
-                    placeholder="Describe your symptoms (e.g. fever, headache, cough)"></textarea>
+                    placeholder="Describe your symptoms..."
+                ></textarea>
             </div>
 
             <!-- Submit -->
@@ -125,6 +150,19 @@
 
 .btn-book:hover{
     background:#2563eb;
+}
+
+.error-box{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.error-box ul{
+    margin:0;
+    padding-left:20px;
 }
 </style>
 
