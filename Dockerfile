@@ -30,9 +30,6 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 # Fix Laravel permissions
 RUN chmod -R 775 storage bootstrap/cache
 
-# Generate app key (safe fallback)
-RUN php artisan key:generate
-
 # Expose Render port
 EXPOSE 10000
 
