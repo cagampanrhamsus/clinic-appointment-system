@@ -23,7 +23,7 @@
             <th>Illness</th>
             <th>Medicine</th>
             <th>Instructions</th>
-            <th>PDF</th>
+            <th>Download Prescription</th>
         </tr>
     </thead>
 
