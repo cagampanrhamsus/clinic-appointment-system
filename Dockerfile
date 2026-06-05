@@ -21,14 +21,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy ONLY composer files first (IMPORTANT FIX)
-COPY composer.json composer.lock ./
-
-# Install dependencies (stable layer)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
-
-# Copy full project AFTER dependencies
+# Copy full project first
 COPY . .
+
+# Install dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Fix Laravel permissions
 RUN chmod -R 775 storage bootstrap/cache
@@ -41,3 +38,4 @@ EXPOSE 10000
 
 # Start Laravel
 CMD php -S 0.0.0.0:$PORT -t public
+
