@@ -57,8 +57,9 @@ RUN mkdir -p \
 RUN chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R ug+rwX storage bootstrap/cache
 
-# Enable Apache rewrite (CRITICAL for Laravel routes)
-RUN a2enmod rewrite
+# Enable Apache modules for Laravel. mod_php uses prefork; make that explicit.
+RUN a2dismod mpm_event mpm_worker || true \
+ && a2enmod mpm_prefork rewrite
 
 # FIX Apache document root properly (IMPORTANT FIX)
 ENV APACHE_DOCUMENT_ROOT=/var/www/public
