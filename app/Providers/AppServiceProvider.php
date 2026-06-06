@@ -22,14 +22,17 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-    {
-        View::composer('*', function ($view) {
+{
+    View::composer('*', function ($view) {
 
-            if (!Auth::check()) {
+        try {
+
+            $user = \Illuminate\Support\Facades\Auth::user();
+
+            if (!$user) {
+                $view->with('sidebarAppointments', collect());
                 return;
             }
-
-            $user = Auth::user();
 
             $appointments = Appointment::with('patient')
                 ->where('status', 'approved')
@@ -39,10 +42,14 @@ class AppServiceProvider extends ServiceProvider
                 ->orderBy('appointment_date')
                 ->get()
                 ->groupBy(function ($item) {
-                    return Carbon::parse($item->appointment_date)->format('Y-m-d');
+                    return \Carbon\Carbon::parse($item->appointment_date)->format('Y-m-d');
                 });
 
             $view->with('sidebarAppointments', $appointments);
-        });
-    }
+
+        } catch (\Throwable $e) {
+            $view->with('sidebarAppointments', collect());
+        }
+    });
+}
 }
