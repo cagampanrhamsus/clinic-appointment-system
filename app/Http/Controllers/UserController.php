@@ -12,26 +12,17 @@ class UserController extends Controller
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'message' => 'Unauthenticated'
-            ], 401);
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
         if (!method_exists($user, 'createToken')) {
-            return response()->json([
-                'message' => 'Sanctum not enabled on User model'
-            ], 500);
+            return response()->json(['message' => 'Sanctum not enabled on User model'], 500);
         }
 
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-            ],
+            'user' => $user,
             'token' => $token
         ]);
     }
@@ -47,8 +38,7 @@ class UserController extends Controller
     // READ ONE PATIENT
     public function showPatient($id)
     {
-        $patient = User::where('role', 'patient')
-            ->findOrFail($id);
+        $patient = User::where('role', 'patient')->findOrFail($id);
 
         return response()->json($patient);
     }
@@ -56,33 +46,53 @@ class UserController extends Controller
     // CREATE PATIENT
     public function storePatient(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+        ]);
+
         $patient = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
             'role' => 'patient',
         ]);
 
-        return response()->json($patient, 201);
+        return response()->json([
+            'message' => 'Patient created successfully',
+            'data' => $patient
+        ], 201);
     }
 
-    // UPDATE PATIENT
+    // UPDATE PATIENT (PATCH FIXED)
     public function updatePatient(Request $request, $id)
     {
-        $patient = User::findOrFail($id);
+        $patient = User::where('role', 'patient')->findOrFail($id);
 
-        $patient->update([
-            'name' => $request->name,
-            'email' => $request->email,
+        $validated = $request->validate([
+            'name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
         ]);
 
-        return response()->json($patient);
+        if (empty($validated)) {
+            return response()->json([
+                'message' => 'No data provided to update'
+            ], 422);
+        }
+
+        $patient->update($validated);
+
+        return response()->json([
+            'message' => 'Patient updated successfully',
+            'data' => $patient->fresh()
+        ]);
     }
 
     // DELETE PATIENT
     public function deletePatient($id)
     {
-        $patient = User::findOrFail($id);
+        $patient = User::where('role', 'patient')->findOrFail($id);
 
         $patient->delete();
 

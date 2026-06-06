@@ -14,6 +14,7 @@ Route::middleware(['auth:sanctum', 'role.doctor'])->group(function () {
     Route::post('/patients', [UserController::class, 'storePatient']);
     Route::put('/patients/{id}', [UserController::class, 'updatePatient']);
     Route::delete('/patients/{id}', [UserController::class, 'deletePatient']);
+    Route::patch('/patients/{id}', [UserController::class, 'updatePatient']);
 
     Route::get('/doctors', [DoctorController::class, 'index']);
 
