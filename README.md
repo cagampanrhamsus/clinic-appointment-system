@@ -4,9 +4,10 @@ The Clinic Management Information System (CMIS) is designed to improve and moder
 
 This system reduces manual paperwork, minimizes errors, and speeds up daily transactions within the clinic. It also enhances service quality by allowing faster access to patient data and improving communication between doctors and patients.
 
-This system is intended for educational purposes only.
 
+This system is intended for educational purposes only.
 For more information about similar systems and development references, you may consult software engineering and database management materials available in academic libraries.
+
 
  Modules
 User Account Management
@@ -18,8 +19,9 @@ Medical Records
 Notifications System
 Reports Generation
 Role-Based Access Control ( Doctor / Patient)
- Installation
 
+ 
+ Installation
 You can install the system using the following methods:
 
 🔹 GitHub Fork / Clone
@@ -29,8 +31,8 @@ Clone the repository:
 
 git clone https://github.com/your-repo/clinic-system.git
 🔹 Manual Download
-
 Download the ZIP file from the repository and extract it into your local server directory (e.g., htdocs for XAMPP or www for Laragon).
+
 
  Requirements
 PHP 8.0+
@@ -39,10 +41,14 @@ MySQL 8+ or SQLite
 Composer
 Node.js & NPM (for frontend assets if applicable)
 Apache / Nginx Server
+
+ 
  Demo Credentials (Optional)
 Role	Email	Password
 Doctor	doctor@example.com	doctor123
 Patient	patient@example.com	patient123
+
+ 
  Features Included
 Laravel Sanctum Authentication
 Role-Based Access Control (RBAC)
@@ -52,12 +58,15 @@ Doctor Management System
 Appointment System
 Secure Token-Based Login
 JSON API Responses
-🛠️ Technology Stack
+
+
+ Technology Stack
 Laravel – Backend Framework
 MySQL / SQLite – Database
 Sanctum – API Authentication
 Bootstrap / Tailwind CSS – UI Design
 JavaScript / Axios – API Communication
-📌 Note
 
+
+📌 Note
 This system is created for educational purposes only and is intended to demonstrate how a clinic management system works using modern web development tools.
