@@ -11,9 +11,8 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libpq-dev \
-    gnupg \
-    nodejs \
-    npm
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 # PHP extensions
 RUN docker-php-ext-install \
@@ -26,7 +25,13 @@ RUN docker-php-ext-install \
     bcmath
 
 # Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Node 22 is required by Vite 8 / laravel-vite-plugin 3.
+COPY --from=node:22-bookworm-slim /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+ && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 WORKDIR /var/www
 
@@ -37,18 +42,20 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # Install frontend dependencies + build
-RUN npm install
+RUN npm ci
 RUN npm run build
 
-# Ensure Laravel required directories exist (IMPORTANT FIX)
-RUN mkdir -p storage/logs bootstrap/cache
+# Ensure Laravel required directories exist
+RUN mkdir -p \
+    storage/logs \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    bootstrap/cache
 
-# Permissions (Railway-safe)
-RUN chmod -R 777 storage bootstrap/cache
-
-# Clear + cache config safely
-RUN php artisan optimize:clear || true
-RUN php artisan config:cache || true
+# Permissions
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R ug+rwX storage bootstrap/cache
 
 # Enable Apache rewrite (CRITICAL for Laravel routes)
 RUN a2enmod rewrite
@@ -59,8 +66,11 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
  && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# Ensure Apache listens correctly on Railway
-EXPOSE 80
+# Railway provides the actual runtime port in $PORT.
+EXPOSE 8080
 
 # Start Apache
-CMD ["apache2-foreground"]
+CMD php artisan optimize:clear --no-ansi || true; \
+    sed -i "s/Listen 80/Listen ${PORT:-8080}/" /etc/apache2/ports.conf; \
+    sed -i "s/<VirtualHost \*:80>/<VirtualHost *:${PORT:-8080}>/" /etc/apache2/sites-available/000-default.conf; \
+    apache2-foreground
