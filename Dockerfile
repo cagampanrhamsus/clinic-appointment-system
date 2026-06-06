@@ -1,6 +1,6 @@
 FROM php:8.4-apache
 
-# Install system dependencies + PostgreSQL libs + Node.js
+# System dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -11,12 +11,11 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libpq-dev \
-    gnupg
+    gnupg \
+    nodejs \
+    npm
 
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs
-
-# Install PHP extensions
+# PHP extensions
 RUN docker-php-ext-install \
     pdo_pgsql \
     pgsql \
@@ -26,10 +25,9 @@ RUN docker-php-ext-install \
     pcntl \
     bcmath
 
-# Install Composer
+# Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www
 
 # Copy project
@@ -38,18 +36,25 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Install Node dependencies and build Vite assets
+# Install frontend dependencies + build
 RUN npm install
 RUN npm run build
 
-# Laravel permissions
-RUN chmod -R 775 storage bootstrap/cache
+# Fix Laravel permissions (IMPORTANT for Railway)
+RUN chmod -R 777 storage bootstrap/cache
 
-# Clear Laravel caches
+# Clear cache AFTER everything is built
 RUN php artisan optimize:clear || true
+RUN php artisan config:cache || true
 
-# Railway port
-EXPOSE 8080
+# Apache setup (IMPORTANT - better than php -S)
+RUN a2enmod rewrite
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# Start Laravel
-CMD php -S 0.0.0.0:${PORT:-8080} -t public
+# Point Apache to Laravel public folder
+ENV APACHE_DOCUMENT_ROOT=/var/www/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+
+EXPOSE 80
+
+CMD ["apache2-foreground"]
