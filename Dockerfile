@@ -1,6 +1,6 @@
 FROM php:8.4-apache
 
-# Install system dependencies + Node.js
+# Install system dependencies + PostgreSQL libs + Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,13 +10,21 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+    libpq-dev \
     gnupg
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_pgsql pgsql mbstring zip exif pcntl bcmath gd
+RUN docker-php-ext-install \
+    pdo_pgsql \
+    pgsql \
+    mbstring \
+    zip \
+    exif \
+    pcntl \
+    bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
