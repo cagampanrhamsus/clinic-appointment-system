@@ -1,7 +1,6 @@
-# Use official PHP image
 FROM php:8.4-apache
 
-# Install system dependencies
+# Install system dependencies + Node.js
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,10 +9,14 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpng-dev \
     libonig-dev \
-    libxml2-dev
+    libxml2-dev \
+    gnupg
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_pgsql pgsql mbstring zip exif pcntl bcmath gd
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -21,18 +24,24 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy full project first
+# Copy project
 COPY . .
 
-# Install dependencies
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# Fix Laravel permissions
+# Install Node dependencies and build Vite assets
+RUN npm install
+RUN npm run build
+
+# Laravel permissions
 RUN chmod -R 775 storage bootstrap/cache
 
-# Expose Render port
-EXPOSE 10000
+# Clear Laravel caches
+RUN php artisan optimize:clear || true
+
+# Railway port
+EXPOSE 8080
 
 # Start Laravel
-CMD php -S 0.0.0.0:$PORT -t public
-
+CMD php -S 0.0.0.0:${PORT:-8080} -t public
