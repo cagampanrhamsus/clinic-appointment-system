@@ -40,21 +40,27 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-di
 RUN npm install
 RUN npm run build
 
-# Fix Laravel permissions (IMPORTANT for Railway)
+# Ensure Laravel required directories exist (IMPORTANT FIX)
+RUN mkdir -p storage/logs bootstrap/cache
+
+# Permissions (Railway-safe)
 RUN chmod -R 777 storage bootstrap/cache
 
-# Clear cache AFTER everything is built
+# Clear + cache config safely
 RUN php artisan optimize:clear || true
 RUN php artisan config:cache || true
 
-# Apache setup (IMPORTANT - better than php -S)
+# Enable Apache rewrite (CRITICAL for Laravel routes)
 RUN a2enmod rewrite
-RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# Point Apache to Laravel public folder
+# FIX Apache document root properly (IMPORTANT FIX)
 ENV APACHE_DOCUMENT_ROOT=/var/www/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+ && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
+
+# Ensure Apache listens correctly on Railway
 EXPOSE 80
 
+# Start Apache
 CMD ["apache2-foreground"]
