@@ -10,15 +10,15 @@ For more information about similar systems and development references, you may c
 
 
  Modules
-User Account Management
-Doctor Management
-Patient Profiling
-Appointment Scheduling
-Prescription Management
-Medical Records
-Notifications System
-Reports Generation
-Role-Based Access Control ( Doctor / Patient)
+-User Account Management
+-Doctor Management
+-Patient Profiling
+-Appointment Scheduling
+-Prescription Management
+-Medical Records
+-Notifications System
+-Reports Generation
+-Role-Based Access Control ( Doctor / Patient)
 
  
  Installation
